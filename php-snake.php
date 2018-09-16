@@ -31,7 +31,7 @@
  *
  * @author Joakim Winum Lien <joakim@winum.xyz>
  * @license https://opensource.org/licenses/mit-license.html MIT License
- * @version $Release: 2.1.0 $
+ * @version $Release: 2.2.0 $
  * @since File available since Release: 1.0.0
  */
 
@@ -75,12 +75,13 @@ $totalNumberOfFrames = 0;
 $increaseInterval = 1;
 $globalGameTitle = $snakeSprite." \033[38;5;46mPHP Snake\033[0m ".$rightPointingTriangleSprite;
 $key = null;
+$leftMargin = " ";
+$screen = null;
 $blankBoard = null;
 $doIncreasePlayer = false;
 $updatePointDot = false;
 $devMode = false;
 $cacheDraw = false;
-$leftMargin = " ";
 
 
 /**
@@ -405,26 +406,31 @@ function gameOver()
     global $globalGameTitle;
     global $engine;
     global $leftMargin;
+    global $screen;
 
-    $engine->clearScreen();
-
-    echo $leftMargin;
-    echo $globalGameTitle;
-    echo "\033[38;5;249m";
-    echo " Game Over ";
+    $screen = $leftMargin;
+    $screen .= $globalGameTitle;
+    $screen .= "\033[38;5;249m";
+    $screen .= " Game Over ";
     $padScore = str_pad($score, 4, "0", STR_PAD_LEFT);
-    echo "\033[0m";
+    $screen .= "\033[0m";
     $spriteChar = json_decode('"\u2BC8"');
     $rightPointingTriangleSprite = "\033[30;1m".$spriteChar."\033[0m";
-    echo $rightPointingTriangleSprite;
-    echo "\033[38;5;249m";
-    echo " Score: ".$padScore;
+    $screen .= $rightPointingTriangleSprite;
+    $screen .= "\033[38;5;249m";
+    $screen .= " Score: ".$padScore;
     if ($devMode) {
-        echo " [DevMode]";
+        $screen .= " [DevMode]";
     }
-    echo "\n";
-    echo "\033[0m";
-    echo $board;
+    $screen .= "\033[0m";
+    $screen .= "\n";
+    $screen .= $board;
+
+    // clear the screen
+    $engine->clearScreen();
+
+    // print the screen
+    echo $screen;
 
     $engine->resetTty();
 
@@ -583,6 +589,12 @@ function keyActions()
                 $engine->setFpsHorizontal(25);
                 $engine->setFpsVertical((int)($engine->getFpsHorizontal()*$engine->getFpsFactor()));
             }
+        } else if ($key == "y") {
+            // increase fps by 1 fps
+            if ($devMode) {
+                $engine->setFpsHorizontal($engine->getFpsHorizontal()+1);
+                $engine->setFpsVertical((int)($engine->getFpsHorizontal()*$engine->getFpsFactor()));
+            }
         } else if ($key == "n") {
             // replace point dot
             if ($devMode) {
@@ -611,7 +623,7 @@ function keyActions()
  *
  * @author Joakim Winum Lien <joakim@winum.xyz>
  * @license https://opensource.org/licenses/mit-license.html MIT License
- * @version $Release: 2.1.0 $
+ * @version $Release: 2.2.0 $
  * @since Class available since Release: 1.0.0
  */
 class PhpGameEngine
@@ -965,12 +977,8 @@ class PhpGameEngine
  */
 while (true)
 {
-    // clear the screen
-    $engine->clearScreen();
-
-    // print stats
-    $stats = printStats();
-    echo $stats;
+    // add stats to the screen
+    $screen = printStats();
 
     // update the player
     $player = player($player);
@@ -981,12 +989,18 @@ while (true)
     // collision testing
     collisionTesting($player, $pointDot);
 
-    // draw the board with all the entities on it and print it out
+    // draw the board with all the entities on it and add it to the screen
     $board = draw(array(
         $pointDot,
         $player
     ));
-    echo $board;
+    $screen .= $board;
+
+    // clear the screen
+    $engine->clearScreen();
+
+    // print the screen
+    echo $screen;
 
     // take key input
     echo $leftMargin;
