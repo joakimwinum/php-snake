@@ -31,7 +31,7 @@
  *
  * @author Joakim Winum Lien <joakim@winum.xyz>
  * @license https://opensource.org/licenses/mit-license.html MIT License
- * @version $Release: 2.0.0 $
+ * @version $Release: 2.1.0 $
  * @since File available since Release: 1.0.0
  */
 
@@ -56,6 +56,11 @@ $engine->setFps($engine->getFpsHorizontal());
 
 $pointDot = null;
 
+$spriteChar = json_decode('"\uD83D\uDC0D"');
+$snakeSprite = "\033[30;1m".$spriteChar."\033[0m";
+$spriteChar = json_decode('"\u2BC8"');
+$rightPointingTriangleSprite = "\033[30;1m".$spriteChar."\033[0m";
+
 
 /**
  * global variables
@@ -68,13 +73,14 @@ $snakeLen = 0;
 $snakeOldLen = 0;
 $totalNumberOfFrames = 0;
 $increaseInterval = 1;
-$globalGameTitle = "PHP Snake >";
+$globalGameTitle = $snakeSprite." \033[38;5;46mPHP Snake\033[0m ".$rightPointingTriangleSprite;
 $key = null;
 $blankBoard = null;
 $doIncreasePlayer = false;
 $updatePointDot = false;
 $devMode = false;
 $cacheDraw = false;
+$leftMargin = " ";
 
 
 /**
@@ -109,7 +115,9 @@ $player = createPlayer();
  */
 function createPlayer()
 {
-    return array(array(40, 12, "&"), array(39, 12, "&"), array(38, 12, "&"));
+    $spriteChar = json_decode('"\u2D46"');
+    $playerSprite = "\033[30;1m".$spriteChar."\033[0m";
+    return array(array(40, 12, $playerSprite), array(39, 12, $playerSprite), array(38, 12, $playerSprite));
 }
 
 /**
@@ -122,11 +130,14 @@ function createFrameWall()
 
     $frameWallArray = [];
 
+    $spriteChar = "#";
+    $wallSprite = "\033[38;5;237;48;5;237m".$spriteChar."\033[0m";
+
     for ($i = 0; $i < $board_x; $i++) {
         for ($j = 0; $j < $board_y; $j++) {
             if ($i == 0 || $i == $board_x - 1 || $j == 0 || $j == $board_y - 1) {
                 // create the frame wall
-                $frameWallArray[] = array($i, $j, "#");
+                $frameWallArray[] = array($i, $j, $wallSprite);
             }
         }
     }
@@ -144,10 +155,12 @@ function createBackground()
 
     $backgroundArray = [];
 
+    $backgroundSprite = " ";
+
     for ($i = 0; $i < $board_x; $i++) {
         for ($j = 0; $j < $board_y; $j++) {
             // create the background
-            $backgroundArray[] = array($i, $j, " ");
+            $backgroundArray[] = array($i, $j, $backgroundSprite);
         }
     }
 
@@ -164,6 +177,7 @@ function draw($entities)
     global $board_y;
     global $blankBoard;
     global $cacheDraw;
+    global $leftMargin;
 
     $board = "";
 
@@ -200,6 +214,11 @@ function draw($entities)
     // convert the board array to string
     for($j=0; $j < $board_y; $j++) {
         for($i=0; $i < $board_x; $i++) {
+            // add margin on the left side of the board
+            if ($i == 0) {
+                $board .= $leftMargin;
+            }
+
             // draw the board array
             $board .= $boardArray["".$i.",".$j.""];
 
@@ -385,17 +404,26 @@ function gameOver()
     global $devMode;
     global $globalGameTitle;
     global $engine;
+    global $leftMargin;
 
     $engine->clearScreen();
 
+    echo $leftMargin;
     echo $globalGameTitle;
-    echo " Game Over";
+    echo "\033[38;5;249m";
+    echo " Game Over ";
     $padScore = str_pad($score, 4, "0", STR_PAD_LEFT);
-    echo " - Score: ".$padScore;
+    echo "\033[0m";
+    $spriteChar = json_decode('"\u2BC8"');
+    $rightPointingTriangleSprite = "\033[30;1m".$spriteChar."\033[0m";
+    echo $rightPointingTriangleSprite;
+    echo "\033[38;5;249m";
+    echo " Score: ".$padScore;
     if ($devMode) {
         echo " [DevMode]";
     }
     echo "\n";
+    echo "\033[0m";
     echo $board;
 
     $engine->resetTty();
@@ -450,16 +478,19 @@ function pointDot($player, $pointDot = null)
 {
     global $updatePointDot;
 
+    $spriteChar = json_decode('"\u25CF"');
+    $pointDotSprite = "\033[30;1m".$spriteChar."\033[0m";
+
     // generate the first dot
     if (!isset($pointDot)) {
         $coordinates = generateNewCoordinates(null, $player);
-        $pointDot = array($coordinates[0], $coordinates[1], "*");
+        $pointDot = array($coordinates[0], $coordinates[1], $pointDotSprite);
     }
 
     // update the dot
     if ($updatePointDot) {
         $coordinates = generateNewCoordinates($pointDot, $player);
-        $pointDot = array($coordinates[0], $coordinates[1], "*");
+        $pointDot = array($coordinates[0], $coordinates[1], $pointDotSprite);
         $updatePointDot = false;
     }
 
@@ -469,7 +500,7 @@ function pointDot($player, $pointDot = null)
 /**
  * @return string
  */
-function printText()
+function printStats()
 {
     global $globalGameTitle;
     global $score;
@@ -477,9 +508,16 @@ function printText()
     global $totalNumberOfFrames;
     global $engine;
     global $devMode;
+    global $leftMargin;
+
+    // add left margin
+    $string = $leftMargin;
 
     // display game name
-    $string = $globalGameTitle;
+    $string .= $globalGameTitle;
+
+    // start color
+    $string .= "\033[38;5;249m";
 
     // display score
     $padScore = str_pad($score, 4, "0", STR_PAD_LEFT);
@@ -499,6 +537,9 @@ function printText()
         $padFPS = str_pad($engine->getFps(), 4, "0", STR_PAD_LEFT);
         $string .= ", FPS: ".$padFPS;
     }
+
+    // end color
+    $string .= "\033[0m";
 
     // add new line
     $string .= "\n";
@@ -570,7 +611,7 @@ function keyActions()
  *
  * @author Joakim Winum Lien <joakim@winum.xyz>
  * @license https://opensource.org/licenses/mit-license.html MIT License
- * @version $Release: 2.0.0 $
+ * @version $Release: 2.1.0 $
  * @since Class available since Release: 1.0.0
  */
 class PhpGameEngine
@@ -928,7 +969,7 @@ while (true)
     $engine->clearScreen();
 
     // print stats
-    $stats = printText();
+    $stats = printStats();
     echo $stats;
 
     // update the player
@@ -948,6 +989,7 @@ while (true)
     echo $board;
 
     // take key input
+    echo $leftMargin;
     $key = $engine->readKeyPress();
 
     // perform key actions
