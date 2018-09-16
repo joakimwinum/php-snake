@@ -31,7 +31,7 @@
  *
  * @author Joakim Winum Lien <joakim@winum.xyz>
  * @license https://opensource.org/licenses/mit-license.html MIT License
- * @version $Release: 1.0.0 $
+ * @version $Release: 2.0.0 $
  * @since File available since Release: 1.0.0
  */
 
@@ -46,48 +46,54 @@ $engine = new PhpGameEngine();
  * settings
  */
 
-$board_x=80;
-$board_y=24;
-
 $framesPerSecondHorizontal = 16;
 $diffConstant = .65;
 
 $engine->setFpsHorizontal($framesPerSecondHorizontal);
 $engine->setFpsFactor($diffConstant);
-$engine->setFpsVertical((int)($engine->getFpsHoriontal()*$engine->getFpsFactor()));
-$engine->setFps($engine->getFpsHoriontal());
+$engine->setFpsVertical((int)($engine->getFpsHorizontal()*$engine->getFpsFactor()));
+$engine->setFps($engine->getFpsHorizontal());
 
 $pointDot = null;
-$oldPointDot = null;
 
 
 /**
  * global variables
  */
 
+$board_x=80;
+$board_y=24;
 $score = 0;
 $snakeLen = 0;
 $snakeOldLen = 0;
 $totalNumberOfFrames = 0;
 $increaseInterval = 1;
 $globalGameTitle = "PHP Snake >";
-$lastFrame = "";
 $key = null;
+$blankBoard = null;
 $doIncreasePlayer = false;
 $updatePointDot = false;
 $devMode = false;
+$cacheDraw = false;
 
 
 /**
  * game setup (to be run once)
  */
 
-// create the board
-$boardArray = createBoard($board_x, $board_y);
+// create the background and frame wall
+$background = createBackground();
+$frameWall = createFrameWall();
+
+// draw the background and frame onto the board and store it in the draw cache
+$cacheDraw = true;
+draw(array(
+    $background,
+    $frameWall
+));
 
 // create the player
 $player = createPlayer();
-$oldPlayer = $player;
 
 
 /**
@@ -99,124 +105,103 @@ $oldPlayer = $player;
  */
 
 /**
- * @param $board_x
- * @param $board_y
- * @return array
- */
-function createBoard($board_x, $board_y)
-{
-    $boardArray = [];
-
-    for ($i = 0; $i < $board_x; $i++) {
-        for ($j = 0; $j < $board_y; $j++) {
-            if ($i == 0 || $i == $board_x - 1 || $j == 0 || $j == $board_y - 1) {
-                // draw borders
-                $boardArray[$i][$j] = "#";
-            } else {
-                // draw the middle part
-                $boardArray[$i][$j] = " ";
-            }
-        }
-    }
-
-    return $boardArray;
-}
-
-/**
  * @return array
  */
 function createPlayer()
 {
-    return array(array(40,12), array(39,12), array(38, 12));
+    return array(array(40, 12, "&"), array(39, 12, "&"), array(38, 12, "&"));
 }
 
-
 /**
- * draw functions
+ * @return array
  */
-
-/**
- * @param $boardArray
- * @param $player
- * @param $oldPlayer
- * @return mixed
- */
-function drawPlayer($boardArray, $player, $oldPlayer)
+function createFrameWall()
 {
-    // get the size of the board
-    $board_x = count($boardArray);
-    $board_y = count($boardArray[0]);
+    global $board_x;
+    global $board_y;
 
-    // reset the board
-    foreach($oldPlayer as $key => $part) {
-        $i = $part[0];
-        $j = $part[1];
+    $frameWallArray = [];
 
-        if ($i == 0 || $i == $board_x - 1 || $j == 0 || $j == $board_y - 1) {
-            // draw borders
-            $boardArray[$part[0]][$part[1]] = "#";
-        } else {
-            // draw the middle part
-            $boardArray[$part[0]][$part[1]] = " ";
+    for ($i = 0; $i < $board_x; $i++) {
+        for ($j = 0; $j < $board_y; $j++) {
+            if ($i == 0 || $i == $board_x - 1 || $j == 0 || $j == $board_y - 1) {
+                // create the frame wall
+                $frameWallArray[] = array($i, $j, "#");
+            }
         }
     }
-    foreach($player as $key => $part) {
-        // draw players body part
-        $boardArray[$part[0]][$part[1]] = "&";
-    }
 
-    return $boardArray;
+    return $frameWallArray;
 }
 
 /**
- * @param $boardArray
- * @param $pointDot
- * @param $oldPointDot
- * @return mixed
+ * @return array
  */
-function drawPointDot($boardArray, $pointDot, $oldPointDot)
+function createBackground()
 {
-    // get the size of the board
-    $board_x = count($boardArray);
-    $board_y = count($boardArray[0]);
+    global $board_x;
+    global $board_y;
 
-    if (!isset($oldPointDot)) {
-        $oldPointDot = array(0, 0);
+    $backgroundArray = [];
+
+    for ($i = 0; $i < $board_x; $i++) {
+        for ($j = 0; $j < $board_y; $j++) {
+            // create the background
+            $backgroundArray[] = array($i, $j, " ");
+        }
     }
 
-    $i = $oldPointDot[0];
-    $j = $oldPointDot[1];
-
-    if ($i == 0 || $i == $board_x - 1 || $j == 0 || $j == $board_y - 1) {
-        // draw borders
-        $boardArray[$oldPointDot[0]][$oldPointDot[1]] = "#";
-    } else {
-        // draw the middle part
-        $boardArray[$oldPointDot[0]][$oldPointDot[1]] = " ";
-    }
-
-    // draw players body part
-    $boardArray[$pointDot[0]][$pointDot[1]] = "*";
-
-    return $boardArray;
+    return $backgroundArray;
 }
 
 /**
- * @param $boardArray
+ * @param $entities
  * @return string
  */
-function drawBoard($boardArray)
+function draw($entities)
 {
+    global $board_x;
+    global $board_y;
+    global $blankBoard;
+    global $cacheDraw;
+
     $board = "";
 
-    // get the size of the board
-    $board_x = count($boardArray);
-    $board_y = count($boardArray[0]);
+    // create a blank board array if it is not already done
+    if (!isset($blankBoard["0,0"])) {
+        // create the board array
+        $blankBoard = [];
 
+        for($j=0; $j < $board_y; $j++) {
+            for($i=0; $i < $board_x; $i++) {
+                $blankBoard["".$i.",".$j.""] = "%";
+            }
+        }
+    }
+    $boardArray = $blankBoard;
+
+    // draw all the entities onto the board array
+    foreach ($entities as $entity) {
+        if (isset($entity[0][0])) {
+            foreach ($entity as $coo) {
+                $boardArray["".$coo[0].",".$coo[1].""] = $coo[2];
+            }
+        } else {
+            $boardArray["".$entity[0].",".$entity[1].""] = $entity[2];
+        }
+    }
+
+    // store the current entities in the draw cache
+    if ($cacheDraw) {
+        $blankBoard = $boardArray;
+        $cacheDraw = false;
+    }
+
+    // convert the board array to string
     for($j=0; $j < $board_y; $j++) {
         for($i=0; $i < $board_x; $i++) {
             // draw the board array
-            $board .= $boardArray[$i][$j];
+            $board .= $boardArray["".$i.",".$j.""];
 
             // add a line break on end of each line
             if ($i == $board_x-1) {
@@ -225,6 +210,7 @@ function drawBoard($boardArray)
         }
     }
 
+    // return the board string
     return $board;
 }
 
@@ -306,13 +292,13 @@ function movePlayer($player, $direction)
         $engine->setFps($engine->getFpsVertical());
     } else if ($direction == $west) {
         $newHead[0] -= 1;
-        $engine->setFps($engine->getFpsHoriontal());
+        $engine->setFps($engine->getFpsHorizontal());
     } else if ($direction == $south) {
         $newHead[1] += 1;
         $engine->setFps($engine->getFpsVertical());
     } else if ($direction == $east) {
         $newHead[0] += 1;
-        $engine->setFps($engine->getFpsHoriontal());
+        $engine->setFps($engine->getFpsHorizontal());
     }
 
     // add the new head on
@@ -356,18 +342,20 @@ function increasePlayer($set = false, $int = null)
 /**
  * @param $player
  * @param $pointDot
- * @param $boardArray
  */
-function collisionTesting($player, $pointDot, $boardArray)
+function collisionTesting($player, $pointDot)
 {
     global $updatePointDot;
+    global $frameWall;
 
     // players head
     $playerHead = $player[0];
 
     // check for collision with wall
-    if ($boardArray[$playerHead[0]][$playerHead[1]] == "#") {
-        gameOver();
+    foreach ($frameWall as $wall) {
+        if($wall[0] == $playerHead[0] && $wall[1] == $playerHead[1]) {
+            gameOver();
+        }
     }
 
     // player eats point dot
@@ -392,7 +380,7 @@ function collisionTesting($player, $pointDot, $boardArray)
  */
 function gameOver()
 {
-    global $lastFrame;
+    global $board;
     global $score;
     global $devMode;
     global $globalGameTitle;
@@ -408,7 +396,7 @@ function gameOver()
         echo " [DevMode]";
     }
     echo "\n";
-    echo $lastFrame;
+    echo $board;
 
     $engine->resetTty();
 
@@ -419,12 +407,13 @@ function gameOver()
 /**
  * @param $pointDot
  * @param $player
- * @param $board_x
- * @param $board_y
- * @return array
+ * @return array|bool
  */
-function generateNewCoordinates($pointDot, $player, $board_x, $board_y)
+function generateNewCoordinates($pointDot, $player)
 {
+    global $board_x;
+    global $board_y;
+
     while (true) {
         // get random coordinates
         $rand_x = rand(1, $board_x-2);
@@ -445,30 +434,32 @@ function generateNewCoordinates($pointDot, $player, $board_x, $board_y)
         break;
     }
 
+    if (!isset($rand_x) || !isset($rand_y)) {
+        return false;
+    }
+
     return array($rand_x, $rand_y);
 }
 
 /**
- * @param null $pointDot
  * @param $player
- * @param $boardArray
+ * @param null $pointDot
  * @return array|null
  */
-function pointDot($pointDot = null, $player, $boardArray)
+function pointDot($player, $pointDot = null)
 {
     global $updatePointDot;
 
-    // get the size of the board
-    $board_x = count($boardArray);
-    $board_y = count($boardArray[0]);
-
     // generate the first dot
     if (!isset($pointDot)) {
-        $pointDot = generateNewCoordinates(null, $player, $board_x, $board_y);
+        $coordinates = generateNewCoordinates(null, $player);
+        $pointDot = array($coordinates[0], $coordinates[1], "*");
     }
 
+    // update the dot
     if ($updatePointDot) {
-        $pointDot = generateNewCoordinates($pointDot, $player, $board_x, $board_y);
+        $coordinates = generateNewCoordinates($pointDot, $player);
+        $pointDot = array($coordinates[0], $coordinates[1], "*");
         $updatePointDot = false;
     }
 
@@ -549,7 +540,7 @@ function keyActions()
             // increase fps
             if ($devMode) {
                 $engine->setFpsHorizontal(25);
-                $engine->setFpsVertical((int)($engine->getFpsHoriontal()*$engine->getFpsFactor()));
+                $engine->setFpsVertical((int)($engine->getFpsHorizontal()*$engine->getFpsFactor()));
             }
         } else if ($key == "n") {
             // replace point dot
@@ -579,7 +570,7 @@ function keyActions()
  *
  * @author Joakim Winum Lien <joakim@winum.xyz>
  * @license https://opensource.org/licenses/mit-license.html MIT License
- * @version $Release: 1.0.0 $
+ * @version $Release: 2.0.0 $
  * @since Class available since Release: 1.0.0
  */
 class PhpGameEngine
@@ -645,7 +636,7 @@ class PhpGameEngine
     /**
      * @return mixed
      */
-    public function getFpsHoriontal()
+    public function getFpsHorizontal()
     {
         return $this->fpsHorizontal;
     }
@@ -817,6 +808,8 @@ class PhpGameEngine
 
         // get the time from the beginning of the code
         $this->setGameTimeBeginning($this->microtimenow());
+
+        return true;
     }
 
     /**
@@ -925,6 +918,7 @@ class PhpGameEngine
     }
 }
 
+
 /**
  * game loop
  */
@@ -941,19 +935,16 @@ while (true)
     $player = player($player);
 
     // update the point dot
-    $pointDot = pointDot($pointDot, $player, $boardArray);
+    $pointDot = pointDot($player, $pointDot);
 
     // collision testing
-    collisionTesting($player, $pointDot, $boardArray);
+    collisionTesting($player, $pointDot);
 
-    // draw the point dot
-    $boardArray = drawPointDot($boardArray, $pointDot, $oldPointDot);
-
-    // draw the player
-    $boardArray = drawPlayer($boardArray, $player, $oldPlayer);
-
-    // print out the full board
-    $board = drawBoard($boardArray);
+    // draw the board with all the entities on it and print it out
+    $board = draw(array(
+        $pointDot,
+        $player
+    ));
     echo $board;
 
     // take key input
@@ -964,15 +955,6 @@ while (true)
 
     // count frames
     $totalNumberOfFrames += 1;
-
-    // save the last frame (used for game over)
-    $lastFrame = $board;
-
-    // save the state of the old player
-    $oldPlayer = $player;
-
-    // save the state of the old point dot
-    $oldPointDot = $pointDot;
 
     // sync game loop to the saved fps value
     $engine->fpsSync();
