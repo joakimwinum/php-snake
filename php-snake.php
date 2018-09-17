@@ -31,7 +31,7 @@
  *
  * @author Joakim Winum Lien <joakim@winum.xyz>
  * @license https://opensource.org/licenses/mit-license.html MIT License
- * @version $Release: 2.2.0 $
+ * @version $Release: 2.2.1 $
  * @since File available since Release: 1.0.0
  */
 
@@ -58,7 +58,7 @@ $pointDot = null;
 
 $spriteChar = json_decode('"\uD83D\uDC0D"');
 $snakeSprite = "\033[30;1m".$spriteChar."\033[0m";
-$spriteChar = json_decode('"\u2BC8"');
+$spriteChar = json_decode('"\u25B6"');
 $rightPointingTriangleSprite = "\033[30;1m".$spriteChar."\033[0m";
 
 
@@ -414,7 +414,7 @@ function gameOver()
     $screen .= " Game Over ";
     $padScore = str_pad($score, 4, "0", STR_PAD_LEFT);
     $screen .= "\033[0m";
-    $spriteChar = json_decode('"\u2BC8"');
+    $spriteChar = json_decode('"\u25B6"');
     $rightPointingTriangleSprite = "\033[30;1m".$spriteChar."\033[0m";
     $screen .= $rightPointingTriangleSprite;
     $screen .= "\033[38;5;249m";
@@ -623,7 +623,7 @@ function keyActions()
  *
  * @author Joakim Winum Lien <joakim@winum.xyz>
  * @license https://opensource.org/licenses/mit-license.html MIT License
- * @version $Release: 2.2.0 $
+ * @version $Release: 2.2.1 $
  * @since Class available since Release: 1.0.0
  */
 class PhpGameEngine
