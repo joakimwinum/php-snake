@@ -24,6 +24,7 @@
  *
  * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
  * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
  * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
@@ -31,7 +32,7 @@
  *
  * @author Joakim Winum Lien <joakim@winum.xyz>
  * @license https://opensource.org/licenses/mit-license.html MIT License
- * @version $Release: 2.2.1 $
+ * @version $Release: 2.2.2 $
  * @since File available since Release: 1.0.0
  */
 
@@ -623,7 +624,7 @@ function keyActions()
  *
  * @author Joakim Winum Lien <joakim@winum.xyz>
  * @license https://opensource.org/licenses/mit-license.html MIT License
- * @version $Release: 2.2.1 $
+ * @version $Release: 2.2.2 $
  * @since Class available since Release: 1.0.0
  */
 class PhpGameEngine
