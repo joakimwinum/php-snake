@@ -15,13 +15,13 @@ There is a custom game engine class inside the game that takes care of mainly th
 
 The latter being the main challenge that faced this project.
 
-## Getting Started
+## Usage
 
-Run the game in a CLI
+Run the game in a CLI:
 
-```php php-snake.php```
-
-```./php-snake.php```
+```console
+docker run -it --rm --name php-snake joakimwinum/php-snake
+```
 
 ## Authors
 
