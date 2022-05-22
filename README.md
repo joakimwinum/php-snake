@@ -29,4 +29,4 @@ docker run -it --rm --name php-snake joakimwinum/php-snake
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details
+This project is licensed under the MIT License - see the [LICENSE](https://github.com/joakimwinum/php-snake/blob/main/LICENSE) file for details
